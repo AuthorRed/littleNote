@@ -22,7 +22,7 @@
 </BODY>
 <script>
 	$(document).ready(function(){
-		$.fn.zTree.init($("#tree"), setting,  getZNodes());
+		$.fn.zTree.init($("#tree"), setting,getZNodes());
 	});
 	function getFromCache(){
 		console.log(getZNodes());
@@ -94,7 +94,6 @@
 		}
 		return (S4()+S4()+"-"+S4()+"-"+S4()+"-"+S4()+"-"+S4()+S4()+S4());
 	}
-
 </script>
 <SCRIPT type="text/javascript">
 	<!--
@@ -124,7 +123,6 @@
 	var zNodes =[
 		{id:1, pId:0, name:"根目录:点击添加子目录", open:true}
 	];
-
 
 	function zTreeOnRemove(event, treeId, treeNode) {
 		console.log(treeNode.tId + ", " + treeNode.name);
