@@ -3,7 +3,7 @@
 <HEAD>
 <TITLE>Tree</TITLE>
 <meta http-equiv="content-type" content="text/html; charset=UTF-8">
-
+<meta name="viewport" content="width=device-width,initial-scale=1.2" />
 <link rel="stylesheet" href="css/bootstrapStyle/bootstrapStyle.css" type="text/css">
 
 <script type="text/javascript" src="js/jquery.min.js"></script>
@@ -14,16 +14,40 @@
 </HEAD>
 
 <body>
-<button onclick="removeCache();">removeCache</button>
-<button onclick="getFromCache();">getFromCache</button>
+
+
 <ul id="tree" class="ztree"></ul>
+<div>
+	<button onclick="removeCache();">删除所有数据</button>
+	<br/><br/>
+	<button onclick="exportData();">导出本地数据</button>
+	<button onclick="replaceData();">替换本地数据</button>
+</div>
 
+<textarea name="showAllData" id="showAllData" cols="30" rows="10" placeholder="数据导入导出开框"></textarea>
 
-</BODY>
+</body>
 <script>
 	$(document).ready(function(){
-		$.fn.zTree.init($("#tree"), setting,  getZNodes());
+		$.fn.zTree.init($("#tree"), setting,getZNodes());
 	});
+	function replaceData(){
+		var data = $("#showAllData").val();
+		data = $.trim(data);
+		if(data.length<2){
+			alert('导入框中的数据不能为空!');
+			return;
+		}
+		if(!isJSON(data)){
+			alert('导入框中的数据格式不正确,要求必须为JSON!');
+			return;
+		}
+		removeCache();
+		localStorage.setItem('zNodes',data);
+	}
+	function exportData(){
+		$("#showAllData").val(JSON.stringify(getZNodes()));
+	}
 	function getFromCache(){
 		console.log(getZNodes());
 	}
@@ -94,7 +118,6 @@
 		}
 		return (S4()+S4()+"-"+S4()+"-"+S4()+"-"+S4()+"-"+S4()+S4()+S4());
 	}
-
 </script>
 <SCRIPT type="text/javascript">
 	<!--
@@ -105,7 +128,7 @@
 			selectedMulti: false
 		},
 		check: {
-			enable: true
+			enable: false
 		},
 		data: {
 			simpleData: {
@@ -122,9 +145,8 @@
 	};
 
 	var zNodes =[
-		{id:1, pId:0, name:"[core] 基本功能 演示", open:true}
+		{id:1, pId:0, name:"根目录:点击添加子目录", open:true}
 	];
-
 
 	function zTreeOnRemove(event, treeId, treeNode) {
 		console.log(treeNode.tId + ", " + treeNode.name);
@@ -171,4 +193,22 @@
 	};
 	//-->
 </SCRIPT>
+<script id="tools">
+	function isJSON(str) {
+		if (typeof str == 'string') {
+			try {
+				var obj=JSON.parse(str);
+				if(typeof obj == 'object' && obj ){
+					return true;
+				}else{
+					return false;
+				}
+
+			} catch(e) {
+				console.log('error：'+str+'!!!'+e);
+				return false;
+			}
+		}
+	}
+</script>
 </HTML>
