@@ -1,21 +1,12 @@
 ﻿<!DOCTYPE html>
 <HTML>
 <HEAD>
-<TITLE>Tree</TITLE>
-<meta http-equiv="content-type" content="text/html; charset=UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1.2" />
-<link rel="stylesheet" href="css/bootstrapStyle/bootstrapStyle.css" type="text/css">
-
-<script type="text/javascript" src="js/jquery.min.js"></script>
-<script type="text/javascript" src="js/jquery.ztree.core.js"></script>
-<script type="text/javascript" src="js/jquery.ztree.excheck.js"></script>
-<script type="text/javascript" src="js/jquery.ztree.exedit.js"></script>
-
+	<TITLE>Tree</TITLE>
+	<meta http-equiv="content-type" content="text/html; charset=UTF-8">
+	<meta name="viewport" content="width=device-width,initial-scale=1.2" />
+	<link rel="stylesheet" href="css/bootstrapStyle/bootstrapStyle.css" type="text/css">
 </HEAD>
-
 <body>
-
-
 <ul id="tree" class="ztree"></ul>
 <div>
 	<button onclick="removeCache();">删除所有数据</button>
@@ -23,14 +14,64 @@
 	<button onclick="exportData();">导出本地数据</button>
 	<button onclick="replaceData();">替换本地数据</button>
 </div>
-
 <textarea name="showAllData" id="showAllData" cols="30" rows="10" placeholder="数据导入导出开框"></textarea>
 
 </body>
-<script>
+<script type="text/javascript" src="js/jquery.min.js"></script>
+<script type="text/javascript" src="js/jquery.ztree.core.js"></script>
+<script type="text/javascript" src="js/jquery.ztree.excheck.js"></script>
+<script type="text/javascript" src="js/jquery.ztree.exedit.js"></script>
+<script id="service">
 	$(document).ready(function(){
 		$.fn.zTree.init($("#tree"), setting,getZNodes());
 	});
+	function zTreeBeforeRemove(treeId, treeNode) {
+		if(!getLockService(treeNode.id)){
+			alert('请先完成正在进行的修改!');
+			var treeObj = $.fn.zTree.getZTreeObj("tree");
+			treeObj.editName(treeNode);
+			return false;
+		}
+		var localNodesArray = getZNodes();
+		for(var i = 0;i<localNodesArray.length;i++){
+			if(treeNode.id==localNodesArray[i].pId){
+				alert('请先删除子目录!');
+				//对于是由于有子目录的情况回滚的要释放锁
+				releaseLockService();
+				return false;
+			}
+		}
+		return true;
+	}
+	function zTreeBeforeRename(treeId, treeNode, newName, isCancel) {
+		if(!getLockService(treeNode.id)){
+			alert('请先完成正在进行的修改!');
+			var treeObj = $.fn.zTree.getZTreeObj("tree");
+			treeObj.editName(treeNode);
+		}
+		return true;
+	}
+	/**缘由:为了防止一个修改没完成就开启另一个修改而导致的数据错乱而添加的锁机制
+	 * 原理:在sessionStorage中锁定正在被修改的nodeId,如果再有修改请求则要拿参数:要修改的nodeId
+	 * 与锁中的nodeId对比,如果是同一个nodeId返回true,可以修改;否则返回false,不能修改;
+	 * 锁的使用完成之后需要记得回调removeLockService()释放锁;
+	 */
+	function getLockService(nodeId){
+		var lock = sessionStorage.getItem('modifyLock');
+		if(!lock){
+			sessionStorage.setItem('modifyLock',nodeId);
+			return true;
+		}else{
+			if(lock==nodeId){
+				return true;
+			}else{
+				return false;
+			}
+		}
+	}
+	function releaseLockService(){
+		sessionStorage.removeItem('modifyLock');
+	}
 	function replaceData(){
 		var data = $("#showAllData").val();
 		data = $.trim(data);
@@ -51,9 +92,7 @@
 	function getFromCache(){
 		console.log(getZNodes());
 	}
-	function removeCache(){
-		localStorage.clear();
-	}
+
 	function getZNodes(){
 		//先从localStorage中拿,如果没有就返回页面默认的初始值
 		var localStoredZNodes = localStorage.getItem('zNodes');
@@ -78,48 +117,46 @@
 	}
 
 	function zTreeOnRename(event, treeId, node, isCancel) {
+		var wrapNode = {};
+		wrapNode.id = node.id;
+		wrapNode.pId = node.pId;
+		wrapNode.name = node.name;
 		var removedNode = removeZNode(node);
 		var localStoredZNodes =getZNodes();
-		localStoredZNodes.push(node);
+		localStoredZNodes.push(wrapNode);
 		localStorage.setItem('zNodes',JSON.stringify(localStoredZNodes));
+		releaseLockService()
 	}
-	function removeZNode(node){
-		var localStoredZNodes =getZNodes();
+	function removeZNode(node) {
+		var localStoredZNodes = getZNodes();
 		var length = localStoredZNodes.length;
 		var result = {};
-		for(var i = 0; i <length; i++)
-		{
+		for (var i = 0; i < length; i++) {
 			var tempNode = localStoredZNodes[i];
-			if(tempNode.id == node.id)
-			{
-				if(i == 0)
-				{
-					result =localStoredZNodes.shift(); //删除并返回数组的第一个元素
+			if (tempNode.id == node.id) {
+				if (i == 0) {
+					result = localStoredZNodes.shift(); //删除并返回数组的第一个元素
 				}
-				else if(i == length-1)
-				{
-					result =localStoredZNodes.pop();  //删除并返回数组的最后一个元素
+				else if (i == length - 1) {
+					result = localStoredZNodes.pop();  //删除并返回数组的最后一个元素
 				}
-				else
-				{
-					result =localStoredZNodes.splice(i,1); //删除下标为i的元素
+				else {
+					result = localStoredZNodes.splice(i, 1); //删除下标为i的元素
 				}
 				break;
 			}
 		}
-		localStorage.setItem('zNodes',JSON.stringify(localStoredZNodes));
+		localStorage.setItem('zNodes', JSON.stringify(localStoredZNodes));
 		return result;
 	}
-
-
-	function guid() {
-		function S4() {
-			return (((1+Math.random())*0x10000)|0).toString(16).substring(1);
-		}
-		return (S4()+S4()+"-"+S4()+"-"+S4()+"-"+S4()+"-"+S4()+S4()+S4());
+</script>
+<script id="repository">
+	function removeCache(){
+		localStorage.clear();
+		releaseLockService();
 	}
 </script>
-<SCRIPT type="text/javascript">
+<SCRIPT id="config" type="text/javascript">
 	<!--
 	var setting = {
 		view: {
@@ -136,6 +173,8 @@
 			}
 		},
 		callback: {
+			beforeRename: zTreeBeforeRename,
+			beforeRemove: zTreeBeforeRemove,
 			onRemove: zTreeOnRemove,
 			onRename: zTreeOnRename
 		},
@@ -151,6 +190,7 @@
 	function zTreeOnRemove(event, treeId, treeNode) {
 		console.log(treeNode.tId + ", " + treeNode.name);
 		removeZNode(treeNode);
+		releaseLockService();
 	}
 	//var newCount = newCount();
 	function addHoverDom(treeId, treeNode) {
@@ -210,5 +250,13 @@
 			}
 		}
 	}
+
+	function guid() {
+		function S4() {
+			return (((1+Math.random())*0x10000)|0).toString(16).substring(1);
+		}
+		return (S4()+S4()+"-"+S4()+"-"+S4()+"-"+S4()+"-"+S4()+S4()+S4());
+	}
 </script>
+
 </HTML>
