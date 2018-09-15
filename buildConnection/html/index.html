@@ -16,13 +16,17 @@
 
 <ul id="rootNode">
     <li>1</li>
-    <li ><a href="javascript:void(0)" >aa</a>
+    <li >
+        <span class = 'toggal'>TT</span>
+        <a href="javascript:void(0)" >root node</a>
+        <span class="add">+</span>
         <ul>
-            <li>1</li>
-            <li>1</li>
+            <li>2</li><div onclick="doSpanOnclick()" id="divId" name="divName">div</div>
+            <li>2</li>
         </ul>
     </li>
 </ul>
+
 
 </body>
 <script src="../js/jquery-3.3.1.js"></script>
@@ -30,17 +34,51 @@
     $(document).ready(function(){
         console.log('jquery ok..')
     });
+function doSpanOnclick() {
 
+    console.log($(this).text());
+}
 
 </script>
 <script id="event">
-    $("#rootNode, .add").on("click","a", function(){
-        $(this).parent().append("<ul><li><a href='javascript:void(0)' class='add'>add</a><span class = 'remove'>remove</span></li></ul>");
+    $("#rootNode").on("click","span[class='add']", function(){
+        var content=
+            "<ul>" +
+              "<li>" +
+                "<span class = 'toggal'>TT</span>" +
+                "<a href='javascript:void(0)' class='add'>new node</a>"+
+                 "<span class = 'add'>+</span>" +
+                 "<span class = 'edit'>E</span>" +
+                 "<span class = 'remove'>-</span>" +
+              "</li>" +
+            "</ul>";
+        $(this).parent().append(content);
         console.log($(this).parent());
     });
-    $("#rootNode, .remove").on("click","span", function(){
-        $(this).parent().hide();
-        console.log($(this).parent());
+    // $("#rootNode, .remove").on("click","span", function(){
+    //     $(this).parent().remove();
+    //     console.log($(this).parent());
+    // });
+    $("#rootNode").on("click","span[class='remove']", function(){
+        $(this).parent().remove();
+        console.log('remove log:'+$(this).parent());
+    });
+    $("#rootNode").on("click","span[class='edit']", function(){
+        console.log($(this).siblings('a').html("<input class='input' type=\"text\">"))
+        console.log($(this).siblings('a').children('input').focus());
+    });
+    $("#rootNode").on("blur","input", function(){
+        $(this).parent().html($(this).val())
+    });
+    $("#rootNode").on("click","span[class='toggal']", function(){
+        // console.log($(this).parent().children());
+        console.log($(this).siblings('ul').toggle());
+        // console.log('toggal log:'+JSON.stringify($(this).children('a')));
+    });
+    $("#rootNode").on("dbClick","span[class='toggal']", function(){
+        // console.log($(this).parent().children());
+        console.log($(this).siblings('ul').show());
+        // console.log('toggal log:'+JSON.stringify($(this).children('a')));
     });
 </script>
 
